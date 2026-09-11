@@ -1,27 +1,54 @@
-# Frontend
+# PlantOS
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+PlantOS is a learning-first factory operations application. The current vertical slice combines an Angular machine registry with a Spring Boot REST API and PostgreSQL persistence.
 
-## Development server
+## Applications
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- `frontend/` — Angular 17 interface for registering machines and managing their status.
+- `backend/` — Spring Boot 4 API using Java 21, JPA/Hibernate, Flyway, and PostgreSQL.
 
-## Code scaffolding
+The frontend calls the backend through `/api`. During local development, Angular proxies those requests to `http://localhost:8081`.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Run locally
 
-## Build
+### Backend
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Create a PostgreSQL database named `plantos`, provide the database user's password through `PLANTOS_DB_PASSWORD`, and then run:
 
-## Running unit tests
+```powershell
+cd backend
+$env:PLANTOS_DB_PASSWORD = "your-local-password"
+.\mvnw.cmd spring-boot:run
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+The API starts at `http://localhost:8081`.
 
-## Running end-to-end tests
+### Frontend
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+In another terminal:
 
-## Further help
+```powershell
+cd frontend
+npm install
+npm start
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Open `http://localhost:4200`.
+
+## Verify
+
+```powershell
+cd backend
+.\mvnw.cmd test
+
+cd ..\frontend
+npm run build
+.\node_modules\.bin\ng.cmd test --watch=false --browsers=ChromeHeadless
+```
+
+## Machine API
+
+- `GET /api/machines`
+- `POST /api/machines`
+- `PATCH /api/machines/{code}/status`
+- `DELETE /api/machines/{code}`
