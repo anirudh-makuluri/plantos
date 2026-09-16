@@ -16,6 +16,10 @@ frontend/dist/
 frontend/.angular/
 frontend/coverage/
 
+# .NET build output
+telemetry/**/bin/
+telemetry/**/obj/
+
 # Logs and operating-system files
 *.log
 .DS_Store
