@@ -8,8 +8,6 @@ namespace PlantOS.MachineSimulator.Publishing;
 
 public sealed class KafkaTelemetryPublisher : ITelemetryPublisher, IDisposable
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
-
     private readonly KafkaOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<KafkaTelemetryPublisher> _logger;
@@ -38,7 +36,7 @@ public sealed class KafkaTelemetryPublisher : ITelemetryPublisher, IDisposable
         CancellationToken cancellationToken)
     {
         var publishedTelemetry = telemetry with { ProducedAt = _timeProvider.GetUtcNow() };
-        var payload = JsonSerializer.Serialize(publishedTelemetry, SerializerOptions);
+        var payload = JsonSerializer.Serialize(publishedTelemetry, PlantOSJson.SerializerOptions);
 
         var delivery = await _producer.ProduceAsync(
             _options.Topic,

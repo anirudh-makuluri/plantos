@@ -1,12 +1,12 @@
 # PlantOS
 
-PlantOS is a learning-first factory operations application. The current vertical slices combine an Angular machine registry, a Spring Boot REST API with PostgreSQL persistence, and a .NET machine telemetry simulator publishing to Kafka.
+PlantOS is a learning-first factory operations application. The current vertical slices combine an Angular machine registry, a Spring Boot REST API with PostgreSQL persistence, and .NET services that simulate and process machine telemetry through Kafka.
 
 ## Applications
 
 - `frontend/` — Angular 17 interface for registering machines and managing their status.
 - `backend/` — Spring Boot 4 API using Java 21, JPA/Hibernate, Flyway, and PostgreSQL.
-- `telemetry/` — .NET 10 event contracts, machine simulator, and automated tests.
+- `telemetry/` — .NET 10 event contracts, machine simulator, telemetry processor, and automated tests.
 
 The frontend calls the backend through `/api`. During local development, Angular proxies those requests to `http://localhost:8081`.
 
@@ -44,10 +44,10 @@ Kafka runs in Docker inside WSL, while the simulator runs from PowerShell on Win
 wsl sh -lc 'cd /mnt/d/own/plantos && sh scripts/start-kafka.sh'
 ```
 
-After Kafka finishes starting, create the telemetry topic from a second terminal:
+After Kafka finishes starting, create the telemetry, health, and anomaly topics from a second terminal:
 
 ```powershell
-wsl sh -lc 'cd /mnt/d/own/plantos && docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic plantos.machine.telemetry.v1 --partitions 3 --replication-factor 1'
+wsl sh -lc 'cd /mnt/d/own/plantos && sh scripts/create-kafka-topics.sh'
 ```
 
 Start a console consumer that prints the Kafka key, partition, offset, and JSON payload:
@@ -56,13 +56,19 @@ Start a console consumer that prints the Kafka key, partition, offset, and JSON 
 wsl sh -lc 'cd /mnt/d/own/plantos && docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic plantos.machine.telemetry.v1 --formatter-property print.key=true --formatter-property print.partition=true --formatter-property print.offset=true --from-beginning'
 ```
 
-Then run the simulator in another PowerShell terminal:
+Run the telemetry processor in another PowerShell terminal:
+
+```powershell
+dotnet run --project telemetry/src/PlantOS.TelemetryProcessor
+```
+
+Then run the simulator in another terminal:
 
 ```powershell
 dotnet run --project telemetry/src/PlantOS.MachineSimulator
 ```
 
-The fixed local machine profiles and event interval are configured in `telemetry/src/PlantOS.MachineSimulator/appsettings.json`. Stop the simulator with `Ctrl+C`; it flushes queued Kafka messages before exiting.
+The fixed local machine profiles and event interval are configured in `telemetry/src/PlantOS.MachineSimulator/appsettings.json`. Health thresholds are configured in `telemetry/src/PlantOS.TelemetryProcessor/appsettings.json`. Stop each .NET worker with `Ctrl+C`; it closes or flushes its Kafka client before exiting.
 Stop Kafka with `Ctrl+C` in its attached terminal.
 
 ## Verify
