@@ -6,6 +6,7 @@ import com.example.plantos.backend.dto.UpdateMachineRequest;
 import com.example.plantos.backend.machine.Machine;
 import com.example.plantos.backend.machine.MachineService;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,7 +61,14 @@ public class MachineController {
 	@DeleteMapping("/{code}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteMachine(@PathVariable String code) {
-		if (!machineService.deleteMachine(code)) {
+		boolean deleted;
+		try {
+			deleted = machineService.deleteMachine(code);
+		} catch (DataIntegrityViolationException exception) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT,
+					"Machine has retained operational history and cannot be deleted", exception);
+		}
+		if (!deleted) {
 			throw new ResponseStatusException(
 					HttpStatus.NOT_FOUND,
 					"Machine not found: " + code

@@ -5,7 +5,8 @@ set -eu
 for topic in \
     plantos.machine.telemetry.v1 \
     plantos.machine.health.v1 \
-    plantos.machine.anomaly.v1
+    plantos.machine.anomaly.v1 \
+    plantos.machine.anomaly.v1.DLT
 do
     docker compose exec -T kafka \
         /opt/kafka/bin/kafka-topics.sh \

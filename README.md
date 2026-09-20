@@ -1,6 +1,8 @@
 # PlantOS
 
-PlantOS is a learning-first factory operations application. The current vertical slices combine an Angular machine registry, a Spring Boot REST API with PostgreSQL persistence, and .NET services that simulate and process machine telemetry through Kafka.
+PlantOS is a learning-first factory operations application. The current vertical slices combine an Angular machine registry, a Spring Boot REST API with PostgreSQL persistence, .NET services that simulate and process machine telemetry through Kafka, and a durable Spring alert workflow.
+
+For milestone 3's code walkthrough, alert API, duplicate handling, and manual verification, see [the durable alert workflow guide](docs/milestone-3.md).
 
 ## Applications
 
@@ -44,7 +46,7 @@ Kafka runs in Docker inside WSL, while the simulator runs from PowerShell on Win
 wsl sh -lc 'cd /mnt/d/own/plantos && sh scripts/start-kafka.sh'
 ```
 
-After Kafka finishes starting, create the telemetry, health, and anomaly topics from a second terminal:
+After Kafka finishes starting, create the telemetry, health, anomaly, and anomaly dead-letter topics from a second terminal:
 
 ```powershell
 wsl sh -lc 'cd /mnt/d/own/plantos && sh scripts/create-kafka-topics.sh'
@@ -70,6 +72,18 @@ dotnet run --project telemetry/src/PlantOS.MachineSimulator
 
 The fixed local machine profiles and event interval are configured in `telemetry/src/PlantOS.MachineSimulator/appsettings.json`. Health thresholds are configured in `telemetry/src/PlantOS.TelemetryProcessor/appsettings.json`. Stop each .NET worker with `Ctrl+C`; it closes or flushes its Kafka client before exiting.
 Stop Kafka with `Ctrl+C` in its attached terminal.
+
+### Durable alerts (milestone 3)
+
+Enable the Kafka listener when starting Spring:
+
+```powershell
+$env:PLANTOS_KAFKA_ENABLED = 'true'
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+With Kafka, the .NET processor, and Spring running, run `.\scripts\verify-alert-workflow.ps1` from the repository root. It creates a unique simulated machine and proves raw telemetry becomes one durable alert despite duplicate delivery, then acknowledges and resolves it. It retains the named fixture for inspection. Read alerts with `GET /api/alerts`; workflow and history endpoints are documented in the guide above. Register simulator machine codes before consuming their anomalies; unknown machines are sent to the dead-letter topic.
 
 ## Verify
 
